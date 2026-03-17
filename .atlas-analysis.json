@@ -1,0 +1,77 @@
+{
+  "projectType": "saas",
+  "projectName": "Bloc de Notas",
+  "projectDescription": "A full-stack notepad application with a PostgreSQL backend that lets users create, view, update, and delete notes with completion status tracking.",
+  "theme": "almond",
+  "primaryColor": "#4F86C6",
+  "lightColor": "#EBF2FB",
+  "darkColor": "#1E3A5F",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "quickstart"]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/creating-notes",
+              "features/viewing-notes",
+              "features/editing-notes",
+              "features/deleting-notes",
+              "features/note-status"
+            ]
+          },
+          {
+            "group": "Setup & Deployment",
+            "pages": [
+              "setup/database",
+              "setup/backend",
+              "setup/frontend"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Database Functions",
+            "pages": [
+              "api/notes-agregar",
+              "api/notes-buscar",
+              "api/notes-listado",
+              "api/notes-modificar",
+              "api/notes-eliminar"
+            ]
+          },
+          {
+            "group": "Data Model",
+            "pages": ["api/data-model"]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Create notes with a name, description, and status",
+    "List all active notes",
+    "Search notes by ID",
+    "Update note name, description, and completion status",
+    "Soft-delete notes via logical status (ACTIVO/INACTIVO)",
+    "Track completion status (COMPLETADO/INCOMPLETO)",
+    "PostgreSQL stored procedures for all CRUD operations",
+    "Single-page HTML frontend"
+  ],
+  "publicApiSurface": [
+    "notes_agregar(p1_notes_name, p2_notes_descr, p3_notes_status, p5_notes_lstatus)",
+    "notes_buscar(p1_notes_id)",
+    "notes_listado()",
+    "notes_modificar(p1_notes_id, p2_notes_name, p3_notes_descr, p4_notes_status)",
+    "notes_eliminar(p1_notes_id)",
+    "notes table: notes_id, notes_name, notes_descr, notes_status, notes_lstatus"
+  ]
+}
