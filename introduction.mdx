@@ -1,0 +1,58 @@
+---
+title: "Introduction"
+description: "A full-stack notepad application with a PostgreSQL backend for creating, managing, and tracking notes."
+---
+
+## What is Bloc de Notas?
+
+Bloc de Notas is a full-stack notepad application that lets you create, organize, and track notes with completion status. It uses a PostgreSQL database with stored procedures to handle all data operations and an HTML frontend for a straightforward user interface.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get the app running in minutes
+  </Card>
+  <Card title="Creating Notes" icon="pencil" href="/features/creating-notes">
+    Learn how to add new notes
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/notes-agregar">
+    Explore the database function API
+  </Card>
+  <Card title="Data Model" icon="database" href="/api/data-model">
+    Understand the notes table schema
+  </Card>
+</CardGroup>
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Note management" icon="note-sticky">
+    Create, read, update, and delete notes with name, description, and status fields.
+  </Card>
+  <Card title="Completion tracking" icon="circle-check">
+    Track whether a note is `COMPLETADO` (completed) or `INCOMPLETO` (incomplete).
+  </Card>
+  <Card title="Soft delete" icon="trash-can">
+    Notes are never permanently deleted — they are marked `INACTIVO` so records are preserved.
+  </Card>
+  <Card title="Stored procedures" icon="server">
+    All data operations use PostgreSQL stored procedures for a clean, consistent interface.
+  </Card>
+</CardGroup>
+
+## How it works
+
+Bloc de Notas is composed of three layers:
+
+1. **PostgreSQL database** — stores notes in the `notes` table and exposes five stored procedures for CRUD operations.
+2. **Backend server** — calls the stored procedures in response to HTTP requests from the frontend.
+3. **HTML frontend** — a single-page interface where users create and manage their notes.
+
+## Database functions at a glance
+
+| Function | Description |
+|---|---|
+| `notes_agregar` | Insert a new note |
+| `notes_buscar` | Find a note by ID |
+| `notes_listado` | List all active notes |
+| `notes_modificar` | Update a note's fields |
+| `notes_eliminar` | Soft-delete a note |

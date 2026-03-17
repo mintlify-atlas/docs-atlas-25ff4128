@@ -1,0 +1,95 @@
+---
+title: "Editing notes"
+description: "How to update a note's name, description, or completion status using notes_modificar."
+---
+
+You can update three fields on an existing note: its name, description, and completion status. The logical status (`notes_lstatus`) cannot be changed through the modify procedure — use the delete flow to deactivate a note.
+
+## Edit a note
+
+<Steps>
+  <Step title="Select the note">
+    In the frontend, click the note you want to edit. The form populates with the note's current values.
+  </Step>
+  <Step title="Update the fields">
+    Modify any combination of the editable fields:
+
+    - **Name** (`notes_name`) — update the title
+    - **Description** (`notes_descr`) — update the body content
+    - **Status** (`notes_status`) — change between `COMPLETADO` and `INCOMPLETO`
+  </Step>
+  <Step title="Save the changes">
+    Click the save button. The backend calls `notes_modificar` with the note's ID and the new values.
+  </Step>
+</Steps>
+
+<Warning>
+  `notes_modificar` replaces all three editable fields at once. If you leave a field unchanged, submit the original value to avoid overwriting it with an empty string.
+</Warning>
+
+## Editable fields
+
+<ParamField path="body.notes_id" type="integer" required>
+  The ID of the note to update. This identifies which row is modified.
+</ParamField>
+
+<ParamField path="body.notes_name" type="string" required>
+  The new title for the note.
+</ParamField>
+
+<ParamField path="body.notes_descr" type="string" required>
+  The new body content for the note.
+</ParamField>
+
+<ParamField path="body.notes_status" type="string" required>
+  The new completion status. Must be `COMPLETADO` or `INCOMPLETO`.
+</ParamField>
+
+## Field that cannot be edited here
+
+The `notes_lstatus` (logical/soft-delete status) field is **not** a parameter of `notes_modificar`. To deactivate a note, use [`notes_eliminar`](/features/deleting-notes) instead.
+
+## How `notes_modificar` works
+
+`notes_modificar` is a PostgreSQL stored procedure that:
+
+1. Accepts the note ID and the three new field values.
+2. Locates the row in the `notes` table by `notes_id`.
+3. Updates `notes_name`, `notes_descr`, and `notes_status` in place.
+
+### Parameters
+
+| Parameter | Maps to | Description |
+|---|---|---|
+| `p1_notes_id` | `notes_id` | ID of the note to update |
+| `p2_notes_name` | `notes_name` | New title |
+| `p3_notes_descr` | `notes_descr` | New body content |
+| `p4_notes_status` | `notes_status` | New completion status |
+
+### Example call
+
+```sql
+SELECT notes_modificar(
+  1,
+  'Comprar víveres y artículos de limpieza',
+  'Leche, pan, huevos, frutas, jabón y detergente',
+  'COMPLETADO'
+);
+```
+
+You can verify the update by fetching the note afterwards:
+
+```sql
+SELECT * FROM notes_buscar(1);
+```
+
+```sql
+ notes_id |            notes_name             |              notes_descr               | notes_status | notes_lstatus
+----------+-----------------------------------+----------------------------------------+--------------+---------------
+        1 | Comprar víveres y artículos...    | Leche, pan, huevos, frutas, jabón...   | COMPLETADO   | ACTIVO
+(1 row)
+```
+
+<Tip>
+  To mark a note as completed without changing its name or description, pass the original name and description values along with `'COMPLETADO'` as the status.
+</Tip>

@@ -1,0 +1,37 @@
+---
+title: "notes_eliminar — Delete a note"
+description: "Removes a note from the database by its primary key."
+---
+
+The `notes_eliminar` function deletes the row matching `p1_notes_id` from `public.notes`. It returns `void`.
+
+## Parameters
+
+<ParamField path="p1_notes_id" type="integer" required>
+  The primary key of the note to delete.
+</ParamField>
+
+## Return value
+
+Returns `void`. The function does not return data.
+
+<Note>
+  Although described as a soft-delete in the UI, this function sets `notes_lstatus = 'INACTIVO'` to hide the note from normal listings. The row is retained in the database unless a hard-delete path is triggered.
+</Note>
+
+<Warning>
+  This operation cannot be undone through the normal UI. Once a note is deleted, it will no longer appear in the application. Direct database access is required to recover or permanently remove the row.
+</Warning>
+
+## Example
+
+```sql
+SELECT public.notes_eliminar(7);
+```
+
+```sql
+-- Verify the note is no longer returned in active listings
+SELECT * FROM public.notes_listado()
+WHERE notes_lstatus = 'ACTIVO' AND notes_id = 7;
+-- (0 rows)
+```

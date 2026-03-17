@@ -1,0 +1,102 @@
+---
+title: "Frontend setup"
+description: "Open or serve the frontend HTML file and connect it to the running backend."
+---
+
+## Prerequisites
+
+- The backend server is running. See [Backend setup](/setup/backend).
+- The file: `frontend.html`
+
+## Setup
+
+<Steps>
+  <Step title="Configure the backend API endpoint">
+    Before opening the file, verify that `frontend.html` points to the correct backend URL.
+
+    Open `frontend.html` in a text editor and look for the API base URL — typically defined as a constant or variable near the top of the `<script>` section:
+
+    ```html
+    <!-- Example — the exact variable name depends on the implementation -->
+    <script>
+      const API_URL = 'http://localhost:3000';
+    </script>
+    ```
+
+    Update the value to match the host and port your backend server is listening on.
+
+    <Note>
+      If the frontend and backend are on the same machine, `http://localhost:<port>` is the correct value. If the backend is hosted remotely, use its full URL.
+    </Note>
+  </Step>
+
+  <Step title="Open or serve the file">
+    Choose one of the two options below depending on your needs.
+
+    **Option A — Open directly in a browser**
+
+    Double-click `frontend.html`, or drag it into a browser window. This is the quickest way to get started.
+
+    <Warning>
+      Some browsers restrict `fetch` and `XMLHttpRequest` calls made from `file://` URLs due to CORS policies. If API calls fail when opening the file directly, use Option B instead.
+    </Warning>
+
+    **Option B — Serve via a local web server**
+
+    Serving the file over HTTP avoids browser restrictions on `file://` origins.
+
+    <CodeGroup>
+
+    ```bash Python 3
+    python -m http.server 8080
+    # Open http://localhost:8080/frontend.html
+    ```
+
+    ```bash Node.js (npx)
+    npx serve .
+    # Open the URL printed to the terminal
+    ```
+
+    ```bash PHP
+    php -S localhost:8080
+    # Open http://localhost:8080/frontend.html
+    ```
+
+    </CodeGroup>
+
+    <Tip>
+      Python's built-in HTTP server requires no installation and is the fastest option for local development. Run the command in the same directory as `frontend.html`.
+    </Tip>
+  </Step>
+
+  <Step title="Verify the application">
+    With the frontend open and the backend running, confirm the application works end-to-end:
+
+    1. The note list loads without errors.
+    2. You can create a new note with a name and description.
+    3. The note appears in the list with status `INCOMPLETO` and lifecycle `ACTIVO`.
+    4. You can mark the note as `COMPLETADO`.
+    5. You can delete (soft-delete) the note — it disappears from the active list.
+
+    If any step fails, check the browser's developer console (**F12 → Console**) for error messages and verify the API URL from Step 1 is correct.
+  </Step>
+</Steps>
+
+## Architecture summary
+
+The three layers of Bloc de Notas must all be running at the same time:
+
+<CardGroup cols={2}>
+  <Card title="Database" icon="database" href="/setup/database">
+    PostgreSQL with the `Calendario` database restored and ready.
+  </Card>
+  <Card title="Backend" icon="server" href="/setup/backend">
+    Backend server connected to PostgreSQL, listening for HTTP requests.
+  </Card>
+  <Card title="Frontend" icon="browser" href="/setup/frontend">
+    `frontend.html` served over HTTP and pointed at the backend URL.
+  </Card>
+  <Card title="API reference" icon="code" href="/api/notes-agregar">
+    Explore the five database functions the backend calls.
+  </Card>
+</CardGroup>

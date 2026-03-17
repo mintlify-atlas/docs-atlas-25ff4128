@@ -1,0 +1,46 @@
+---
+title: "notes_modificar — Update a note"
+description: "Updates the name, content, and status of an existing note by its ID."
+---
+
+The `notes_modificar` function updates the `notes_name`, `notes_descr`, and `notes_status` columns for the row matching `p1_notes_id`. It returns `void`.
+
+## Parameters
+
+<ParamField path="p1_notes_id" type="integer" required>
+  The primary key of the note to update.
+</ParamField>
+
+<ParamField path="p2_notes_name" type="varchar" required>
+  The new title or name for the note.
+</ParamField>
+
+<ParamField path="p3_notes_descr" type="text" required>
+  The new body content for the note.
+</ParamField>
+
+<ParamField path="p4_notes_status" type="varchar" required>
+  The new completion status. Must be one of:
+
+  - `COMPLETADO` — mark the note as completed.
+  - `INCOMPLETO` — mark the note as not yet completed.
+</ParamField>
+
+## Return value
+
+Returns `void`. The function does not return data.
+
+<Note>
+  `notes_lstatus` cannot be changed through `notes_modificar`. To soft-delete a note (set its logical status to `INACTIVO`), use [`notes_eliminar`](/api/notes-eliminar) instead.
+</Note>
+
+## Example
+
+```sql
+SELECT public.notes_modificar(
+    7,
+    'Lista de compras actualizada',
+    'Leche, pan, huevos, mantequilla',
+    'COMPLETADO'
+);
+```

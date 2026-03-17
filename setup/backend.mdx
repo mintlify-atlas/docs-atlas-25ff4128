@@ -1,0 +1,135 @@
+---
+title: "Backend setup"
+description: "Extract and configure the backend server to connect to the Calendario database."
+---
+
+## Prerequisites
+
+- The database has been restored. See [Database setup](/setup/database).
+- A RAR extraction tool installed (e.g., `unrar`, 7-Zip, or WinRAR)
+- The archive: `calendario-backend.rar`
+
+## Setup
+
+<Steps>
+  <Step title="Extract the archive">
+    Extract `calendario-backend.rar` to a directory of your choice.
+
+    <CodeGroup>
+
+    ```bash Linux / macOS
+    unrar x "calendario-backend.rar" ./calendario-backend/
+    ```
+
+    ```bash Windows (PowerShell)
+    # Using 7-Zip
+    7z x "calendario-backend.rar" -o"calendario-backend"
+    ```
+
+    </CodeGroup>
+
+    After extraction, review the contents to locate the main entry point (e.g., `index.js`, `app.py`, `Program.cs`) and any configuration files.
+  </Step>
+
+  <Step title="Configure database credentials">
+    The backend needs to connect to the `Calendario` PostgreSQL database. Set the following environment variables or update the backend's configuration file with your values:
+
+    | Variable | Description | Default |
+    |---|---|---|
+    | `DB_HOST` | PostgreSQL server hostname | `localhost` |
+    | `DB_PORT` | PostgreSQL port | `5432` |
+    | `DB_NAME` | Database name | `Calendario` |
+    | `DB_USER` | PostgreSQL username | `postgres` |
+    | `DB_PASSWORD` | PostgreSQL password | *(set your own)* |
+
+    <CodeGroup>
+
+    ```bash Linux / macOS
+    export DB_HOST=localhost
+    export DB_PORT=5432
+    export DB_NAME=Calendario
+    export DB_USER=postgres
+    export DB_PASSWORD=your_password
+    ```
+
+    ```bash Windows (PowerShell)
+    $env:DB_HOST = "localhost"
+    $env:DB_PORT = "5432"
+    $env:DB_NAME = "Calendario"
+    $env:DB_USER = "postgres"
+    $env:DB_PASSWORD = "your_password"
+    ```
+
+    </CodeGroup>
+
+    <Note>
+      If the backend uses a `.env` file or a configuration file (e.g., `appsettings.json`, `config.yaml`), set these values there instead of as environment variables. Refer to any `README` or configuration file found in the extracted archive.
+    </Note>
+  </Step>
+
+  <Step title="Install dependencies">
+    Install the backend's dependencies using the appropriate package manager for the runtime found in the archive.
+
+    <CodeGroup>
+
+    ```bash Node.js
+    npm install
+    ```
+
+    ```bash Python
+    pip install -r requirements.txt
+    ```
+
+    ```bash .NET
+    dotnet restore
+    ```
+
+    </CodeGroup>
+  </Step>
+
+  <Step title="Start the server">
+    Start the backend server using the appropriate command for the runtime.
+
+    <CodeGroup>
+
+    ```bash Node.js
+    npm start
+    # or: node index.js
+    ```
+
+    ```bash Python
+    python app.py
+    # or: uvicorn main:app --reload
+    ```
+
+    ```bash .NET
+    dotnet run
+    ```
+
+    </CodeGroup>
+
+    Once started, note the port the server is listening on (e.g., `http://localhost:3000`). You will need this when configuring the frontend.
+  </Step>
+
+  <Step title="Test the database connection">
+    Verify the backend can reach the database by calling the health check endpoint or listing notes.
+
+    ```bash
+    curl http://localhost:3000/notes
+    ```
+
+    A successful response returns a JSON array (empty `[]` if no notes exist yet). An error at this step usually means the database credentials or hostname are incorrect — double-check the values from Step 2.
+
+    <Tip>
+      You can also test the connection directly with `psql` to isolate whether the issue is with PostgreSQL access or the backend configuration:
+
+      ```bash
+      psql -U postgres -h localhost -d "Calendario" -c "SELECT 1;"
+      ```
+    </Tip>
+  </Step>
+</Steps>
+
+<Warning>
+  Never commit database credentials to source control. Use environment variables or a secrets manager in production.
+</Warning>

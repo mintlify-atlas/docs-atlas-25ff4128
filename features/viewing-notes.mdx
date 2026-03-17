@@ -1,0 +1,90 @@
+---
+title: "Viewing notes"
+description: "How to list all active notes and look up a specific note by ID using notes_listado and notes_buscar."
+---
+
+Bloc de Notas provides two ways to view notes: listing all active notes at once, or fetching a single note by its ID.
+
+## View all notes
+
+The frontend calls `notes_listado` to load all notes with `notes_lstatus = 'ACTIVO'`. Notes marked `INACTIVO` (soft-deleted) are excluded.
+
+<Steps>
+  <Step title="Open the application">
+    Navigate to the main page. The frontend automatically loads and displays all active notes.
+  </Step>
+  <Step title="Browse the list">
+    Each note in the list shows its ID, name, description, and completion status.
+  </Step>
+</Steps>
+
+### How `notes_listado` works
+
+`notes_listado` uses an internal cursor or loop to iterate over the `notes` table and return every row where `notes_lstatus = 'ACTIVO'`.
+
+```sql
+SELECT * FROM notes_listado();
+```
+
+Example output:
+
+```sql
+ notes_id |     notes_name      |        notes_descr        | notes_status | notes_lstatus
+----------+---------------------+---------------------------+--------------+---------------
+        1 | Comprar víveres     | Leche, pan, huevos        | INCOMPLETO   | ACTIVO
+        2 | Llamar al médico    | Turno para el martes      | COMPLETADO   | ACTIVO
+        3 | Revisar correos     | Bandeja de entrada        | INCOMPLETO   | ACTIVO
+(3 rows)
+```
+
+<Note>
+  `notes_listado` only returns notes where `notes_lstatus = 'ACTIVO'`. Soft-deleted notes (`INACTIVO`) are never shown in the list.
+</Note>
+
+## Look up a note by ID
+
+To fetch a single note, the frontend calls `notes_buscar` with the note's ID. This returns a single row (as a `SETOF` row type) regardless of the note's logical status.
+
+<Steps>
+  <Step title="Select a note">
+    Click on a note in the list, or enter the note's ID directly into the lookup field.
+  </Step>
+  <Step title="View the detail">
+    The frontend displays the full note details: ID, name, description, completion status, and logical status.
+  </Step>
+</Steps>
+
+### How `notes_buscar` works
+
+`notes_buscar` accepts a single `notes_id` parameter and returns that note as a `SETOF` row type.
+
+<ParamField path="query.p1_notes_id" type="integer" required>
+  The primary key of the note to retrieve.
+</ParamField>
+
+```sql
+SELECT * FROM notes_buscar(1);
+```
+
+Example output:
+
+```sql
+ notes_id |   notes_name    |     notes_descr     | notes_status | notes_lstatus
+----------+-----------------+---------------------+--------------+---------------
+        1 | Comprar víveres | Leche, pan, huevos  | INCOMPLETO   | ACTIVO
+(1 row)
+```
+
+## Data returned for each note
+
+| Column | Type | Description |
+|---|---|---|
+| `notes_id` | integer | Unique identifier (primary key) |
+| `notes_name` | character varying | Note title |
+| `notes_descr` | text | Note body/content |
+| `notes_status` | character varying | Completion status: `COMPLETADO` or `INCOMPLETO` |
+| `notes_lstatus` | character varying | Logical status: `ACTIVO` or `INACTIVO` |
+
+<Tip>
+  Use `notes_buscar` after creating or updating a note to confirm the stored values match what you submitted.
+</Tip>

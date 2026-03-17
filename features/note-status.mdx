@@ -1,0 +1,94 @@
+---
+title: "Note status fields"
+description: "How the two status fields — notes_status and notes_lstatus — work and what each value means."
+---
+
+Every note in Bloc de Notas has two independent status fields. Understanding both is important for creating, filtering, and managing notes correctly.
+
+<Columns cols={2}>
+  <Card title="notes_status" icon="circle-check">
+    Tracks whether the note's task is completed or still pending.
+  </Card>
+  <Card title="notes_lstatus" icon="eye">
+    Controls whether the note is active (visible) or soft-deleted (hidden).
+  </Card>
+</Columns>
+
+## notes_status — completion status
+
+`notes_status` indicates whether the note represents a finished task or one still in progress. You set this when creating a note and can update it at any time via [`notes_modificar`](/features/editing-notes).
+
+| Value | Meaning | When to use |
+|---|---|---|
+| `INCOMPLETO` | The task is not yet done | Default for new notes |
+| `COMPLETADO` | The task is finished | After completing the associated task |
+
+### Behavior
+
+- Both values are visible in the notes list — `notes_status` does **not** filter notes in or out of `notes_listado`.
+- Changing `notes_status` from `INCOMPLETO` to `COMPLETADO` is the standard way to mark a task done.
+- You can change `notes_status` back to `INCOMPLETO` at any time by editing the note.
+
+```sql
+-- Mark a note as completed
+SELECT notes_modificar(2, 'Llamar al médico', 'Turno para el martes', 'COMPLETADO');
+
+-- Mark it incomplete again
+SELECT notes_modificar(2, 'Llamar al médico', 'Turno para el martes', 'INCOMPLETO');
+```
+
+## notes_lstatus — logical status
+
+`notes_lstatus` is the soft-delete flag. It controls whether a note is considered active and appears in the notes list, or has been deleted and is hidden.
+
+| Value | Meaning | Visible in notes list? |
+|---|---|---|
+| `ACTIVO` | The note is active | Yes — returned by `notes_listado` |
+| `INACTIVO` | The note has been soft-deleted | No — excluded from `notes_listado` |
+
+### Behavior
+
+- `notes_lstatus` is set to `ACTIVO` when a note is created (set manually via the form).
+- Calling [`notes_eliminar`](/features/deleting-notes) sets `notes_lstatus` to `INACTIVO`.
+- `notes_lstatus` **cannot** be changed through `notes_modificar` — only `notes_eliminar` modifies this field via stored procedures.
+- `notes_buscar` returns a note regardless of its `notes_lstatus` value.
+
+```sql
+-- Soft-delete a note (sets notes_lstatus = 'INACTIVO')
+SELECT notes_eliminar(3);
+
+-- The note is now excluded from the list
+SELECT * FROM notes_listado();
+
+-- But it can still be fetched directly
+SELECT * FROM notes_buscar(3);
+```
+
+## Summary table
+
+| Field | Column | Valid values | Changed by | Affects list visibility? |
+|---|---|---|---|---|
+| Completion status | `notes_status` | `COMPLETADO`, `INCOMPLETO` | `notes_agregar`, `notes_modificar` | No |
+| Logical status | `notes_lstatus` | `ACTIVO`, `INACTIVO` | `notes_agregar`, `notes_eliminar` | Yes |
+
+<Note>
+  The two fields are independent. A note can be `COMPLETADO` and `ACTIVO` (done but still visible), or `INCOMPLETO` and `INACTIVO` (not done but soft-deleted). Always check both fields when diagnosing why a note is or isn't appearing in the list.
+</Note>
+
+## How status affects notes_listado
+
+`notes_listado` applies a single filter: it returns only notes where `notes_lstatus = 'ACTIVO'`. The `notes_status` field has no effect on which notes appear.
+
+```sql
+-- Returns all ACTIVO notes, regardless of notes_status
+SELECT * FROM notes_listado();
+```
+
+```sql
+ notes_id |   notes_name     |    notes_descr     | notes_status | notes_lstatus
+----------+------------------+--------------------+--------------+---------------
+        1 | Comprar víveres  | Leche, pan, huevos | INCOMPLETO   | ACTIVO
+        2 | Llamar al médico | Turno para martes  | COMPLETADO   | ACTIVO
+(2 rows)
+-- Note with notes_lstatus = 'INACTIVO' is not shown
+```

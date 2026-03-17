@@ -1,0 +1,49 @@
+---
+title: "notes_buscar — Find a note"
+description: "Retrieves a single note row from the database by its primary key."
+---
+
+The `notes_buscar` function queries `public.notes` for a row matching the given `notes_id` and returns it as a `SETOF public.notes`.
+
+## Parameters
+
+<ParamField path="p1_notes_id" type="integer" required>
+  The primary key of the note to retrieve.
+</ParamField>
+
+## Return value
+
+Returns `SETOF public.notes` — at most one row matching the provided `notes_id`.
+
+<ResponseField name="notes_id" type="integer">
+  Primary key of the note.
+</ResponseField>
+
+<ResponseField name="notes_name" type="varchar">
+  Title or name of the note.
+</ResponseField>
+
+<ResponseField name="notes_descr" type="text">
+  Body content of the note.
+</ResponseField>
+
+<ResponseField name="notes_status" type="varchar">
+  Completion status: `COMPLETADO` or `INCOMPLETO`.
+</ResponseField>
+
+<ResponseField name="notes_lstatus" type="varchar">
+  Logical status: `ACTIVO` or `INACTIVO`.
+</ResponseField>
+
+<Note>
+  If no note exists with the given `notes_id`, the function returns an empty set. Check for an empty result before processing the row.
+</Note>
+
+## Example
+
+```sql
+SELECT * FROM public.notes_buscar(7);
+--  notes_id | notes_name        | notes_descr          | notes_status | notes_lstatus
+-- ----------+-------------------+----------------------+--------------+--------------
+--         7 | Lista de compras  | Leche, pan, huevos   | INCOMPLETO   | ACTIVO
+```

@@ -1,0 +1,129 @@
+---
+title: "Database setup"
+description: "Restore the PostgreSQL backup and verify the Calendario database is ready."
+---
+
+## Prerequisites
+
+- PostgreSQL **18.x** installed and running (the backup was created with 18.3; version 18.x is recommended for compatibility)
+- `pg_restore` available in your `PATH` (included with any PostgreSQL installation)
+- The backup file: `calendario Database.backup`
+
+<Info>
+  The database uses UTF-8 encoding and a Spanish Latin America locale (`Spanish_Latin America.1252`). Ensure your PostgreSQL server supports this locale before restoring.
+</Info>
+
+## What gets created
+
+Restoring the backup creates the following objects in the `public` schema:
+
+| Object | Name | Description |
+|---|---|---|
+| Table | `notes` | Stores all notes with status and lifecycle fields |
+| Sequence | `notes_ID_notes_seq` | Auto-increments `notes_id` (primary key) |
+| Function | `notes_agregar` | Inserts a new note |
+| Function | `notes_buscar` | Finds a note by ID |
+| Function | `notes_listado` | Lists all active notes |
+| Function | `notes_modificar` | Updates a note's fields |
+| Function | `notes_eliminar` | Soft-deletes a note |
+
+## Setup
+
+<Steps>
+  <Step title="Create the database">
+    Connect to PostgreSQL as a superuser and create the `Calendario` database.
+
+    ```bash
+    psql -U postgres -c "CREATE DATABASE \"Calendario\" ENCODING 'UTF8';"
+    ```
+
+    <Note>
+      The database name is case-sensitive. Use `"Calendario"` with double quotes wherever the name is referenced.
+    </Note>
+  </Step>
+
+  <Step title="Restore the backup">
+    Run `pg_restore` against the `.backup` file using the custom format flag (`-Fc`).
+
+    ```bash
+    pg_restore -U postgres -d "Calendario" -Fc "calendario Database.backup"
+    ```
+
+    | Flag | Meaning |
+    |---|---|
+    | `-U postgres` | Connect as the `postgres` superuser (adjust if your user differs) |
+    | `-d "Calendario"` | Target database name |
+    | `-Fc` | Input is a PostgreSQL custom-format dump |
+
+    <Tip>
+      Add `-v` for verbose output to see each object as it is restored.
+
+      ```bash
+      pg_restore -U postgres -d "Calendario" -Fc -v "calendario Database.backup"
+      ```
+    </Tip>
+  </Step>
+
+  <Step title="Verify the table">
+    Connect to the database and confirm the `notes` table exists with the correct columns.
+
+    ```bash
+    psql -U postgres -d "Calendario" -c "\d notes"
+    ```
+
+    Expected output:
+
+    ```
+                        Table "public.notes"
+       Column      |       Type        | Nullable
+    ---------------+-------------------+----------
+     notes_id      | integer           | not null
+     notes_name    | character varying | not null
+     notes_descr   | text              | not null
+     notes_status  | character varying | not null
+     notes_lstatus | character varying | not null
+    Indexes:
+        "notes_pkey" PRIMARY KEY, btree (notes_id)
+    ```
+  </Step>
+
+  <Step title="Verify the functions">
+    List all stored procedures in the `public` schema to confirm all five were restored.
+
+    ```sql
+    SELECT routine_name
+    FROM information_schema.routines
+    WHERE routine_schema = 'public'
+      AND routine_type = 'FUNCTION'
+    ORDER BY routine_name;
+    ```
+
+    Expected rows: `notes_agregar`, `notes_buscar`, `notes_eliminar`, `notes_listado`, `notes_modificar`.
+  </Step>
+
+  <Step title="Verify the sequence">
+    Confirm the auto-increment sequence was created.
+
+    ```sql
+    SELECT sequence_name
+    FROM information_schema.sequences
+    WHERE sequence_schema = 'public';
+    ```
+
+    Expected row: `notes_ID_notes_seq`.
+  </Step>
+</Steps>
+
+## Table schema reference
+
+| Column | Type | Constraints | Values |
+|---|---|---|---|
+| `notes_id` | `integer` | PRIMARY KEY, NOT NULL | Auto-incremented by `notes_ID_notes_seq` |
+| `notes_name` | `character varying` | NOT NULL | Free text |
+| `notes_descr` | `text` | NOT NULL | Free text |
+| `notes_status` | `character varying` | NOT NULL | `COMPLETADO`, `INCOMPLETO` |
+| `notes_lstatus` | `character varying` | NOT NULL | `ACTIVO`, `INACTIVO` |
+
+<Warning>
+  Do not manually delete rows from the `notes` table. Use the `notes_eliminar` function, which performs a soft delete by setting `notes_lstatus` to `INACTIVO`.
+</Warning>

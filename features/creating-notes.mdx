@@ -1,0 +1,95 @@
+---
+title: "Creating notes"
+description: "How to add a new note using the frontend form and the notes_agregar stored procedure."
+---
+
+When you create a note, the frontend sends the note data to the backend, which calls the `notes_agregar` stored procedure to insert a new row into the `notes` table and return the new note's ID.
+
+## Create a note
+
+<Steps>
+  <Step title="Open the application">
+    Open the HTML frontend in your browser. The main page displays the note entry form.
+  </Step>
+  <Step title="Fill in the note fields">
+    Complete all four fields in the form:
+
+    - **Name** — a short title for the note
+    - **Description** — the body or content of the note
+    - **Status** — whether the note is completed or not
+    - **Logical status** — whether the note is active (visible) or inactive
+  </Step>
+  <Step title="Submit the form">
+    Click the submit button. The backend calls `notes_agregar` with your input and returns the new `notes_id`.
+  </Step>
+</Steps>
+
+## Note fields
+
+<ParamField path="body.notes_name" type="string" required>
+  The title of the note. Stored in the `notes_name` column (`character varying`).
+</ParamField>
+
+<ParamField path="body.notes_descr" type="string" required>
+  The body or content of the note. Stored in the `notes_descr` column (`text`).
+</ParamField>
+
+<ParamField path="body.notes_status" type="string" required>
+  Completion status. Must be one of the valid values below.
+</ParamField>
+
+<ParamField path="body.notes_lstatus" type="string" required>
+  Logical (soft-delete) status. Must be one of the valid values below. Set this to `ACTIVO` when creating a new note so it appears in the notes list.
+</ParamField>
+
+## Valid field values
+
+| Field | Valid values | Recommended on creation |
+|---|---|---|
+| `notes_status` | `COMPLETADO`, `INCOMPLETO` | `INCOMPLETO` |
+| `notes_lstatus` | `ACTIVO`, `INACTIVO` | `ACTIVO` |
+
+<Note>
+  A note created with `notes_lstatus = 'INACTIVO'` will not appear in the notes list returned by `notes_listado`. Always set `notes_lstatus` to `ACTIVO` when creating a note you want to see.
+</Note>
+
+## How `notes_agregar` works
+
+`notes_agregar` is a PostgreSQL stored procedure that:
+
+1. Accepts the four input parameters: name, description, status, and logical status.
+2. Inserts a new row into the `notes` table.
+3. Returns the auto-generated `notes_id` (integer, primary key) of the new record.
+
+### Parameters
+
+| Parameter | Maps to | Description |
+|---|---|---|
+| `p1_notes_name` | `notes_name` | Note title |
+| `p2_notes_descr` | `notes_descr` | Note body |
+| `p3_notes_status` | `notes_status` | Completion status |
+| `p5_notes_lstatus` | `notes_lstatus` | Logical delete status |
+
+### Example call
+
+```sql
+SELECT notes_agregar(
+  'Comprar víveres',
+  'Leche, pan, huevos y frutas',
+  'INCOMPLETO',
+  'ACTIVO'
+);
+```
+
+The procedure returns the new note's ID:
+
+```sql
+ notes_agregar
+---------------
+             1
+(1 row)
+```
+
+<Tip>
+  After creation, use [`notes_buscar`](/features/viewing-notes) with the returned ID to confirm the note was saved correctly.
+</Tip>

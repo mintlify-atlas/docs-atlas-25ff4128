@@ -1,80 +1,188 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Pon en marcha Bloc de Notas y crea tu primera nota en minutos."
 ---
 
-## Get started in three steps
+## Requisitos previos
 
-Get your documentation site running locally and make your first customization.
+Antes de comenzar, asegúrate de tener instalado lo siguiente:
 
-### Step 1: Set up your local environment
+- **PostgreSQL 12 o superior** — el motor de base de datos que almacena tus notas.
+- **Node.js 18 o superior** — el entorno de ejecución del servidor backend.
+- Acceso al archivo de backup de la base de datos (`calendario Database.backup`) y al paquete del backend (`calendario-backend.rar`), incluidos en el repositorio del proyecto.
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+---
 
-### Step 2: Deploy your changes
+<Steps>
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+<Step title="Configurar la base de datos">
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+Restaura el backup de PostgreSQL para crear la base de datos `calendario` junto con la tabla `notes` y sus cinco procedimientos almacenados.
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+**1. Crea la base de datos de destino:**
 
-### Step 3: Go live
+```sql
+CREATE DATABASE calendario;
+```
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+**2. Restaura el backup desde la línea de comandos:**
 
-## Next steps
+```bash
+pg_restore \
+  --host=localhost \
+  --port=5432 \
+  --username=postgres \
+  --dbname=calendario \
+  --no-password \
+  "calendario Database.backup"
+```
 
-Now that you have your docs running, explore these key features:
+<Tip>
+Si usas una contraseña, añade la variable de entorno `PGPASSWORD` antes del comando o usa un archivo `.pgpass` para evitar que se te solicite en cada operación.
+</Tip>
 
-<CardGroup cols={2}>
+**3. Verifica que la tabla y los procedimientos fueron creados correctamente:**
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+```sql
+-- Comprueba que la tabla existe
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
+  AND table_name = 'notes';
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+-- Comprueba que los procedimientos almacenados están disponibles
+SELECT routine_name
+FROM information_schema.routines
+WHERE routine_schema = 'public'
+  AND routine_type = 'FUNCTION'
+ORDER BY routine_name;
+```
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+Deberías ver los cinco procedimientos: `notes_agregar`, `notes_buscar`, `notes_eliminar`, `notes_listado` y `notes_modificar`.
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+La tabla `notes` tiene dos campos de estado independientes:
+
+| Campo | Valores válidos | Propósito |
+|---|---|---|
+| `notes_status` | `COMPLETADO` \| `INCOMPLETO` | Indica si la tarea de la nota está terminada |
+| `notes_lstatus` | `ACTIVO` \| `INACTIVO` | Controla la visibilidad lógica de la nota (borrado lógico) |
+
+Las notas nunca se eliminan físicamente — al "borrarlas" se cambia `notes_lstatus` a `INACTIVO` y dejan de aparecer en los listados.
 </Note>
+
+</Step>
+
+<Step title="Configurar e iniciar el backend">
+
+**1. Extrae el paquete del backend:**
+
+```bash
+unrar x calendario-backend.rar
+cd calendario-backend
+```
+
+**2. Instala las dependencias:**
+
+```bash
+npm install
+```
+
+**3. Configura la conexión a la base de datos:**
+
+Crea un archivo `.env` en la raíz del proyecto backend con las credenciales de tu instancia de PostgreSQL:
+
+```bash
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=calendario
+DB_USER=postgres
+DB_PASSWORD=tu_contraseña
+```
+
+**4. Inicia el servidor:**
+
+```bash
+npm start
+```
+
+El backend queda escuchando en `http://localhost:3000` por defecto. Verifica que arrancó sin errores en la consola antes de continuar.
+
+<Warning>
+Asegúrate de que el servidor PostgreSQL esté en ejecución y que el usuario configurado tenga permisos `CONNECT` y `EXECUTE` sobre la base de datos `calendario` antes de arrancar el backend.
+</Warning>
+
+</Step>
+
+<Step title="Abrir el frontend">
+
+El frontend es un único archivo HTML. No requiere compilación ni servidor de archivos adicional.
+
+**Abre `frontend.html` directamente en tu navegador:**
+
+```bash
+# En macOS
+open frontend.html
+
+# En Linux
+xdg-open frontend.html
+
+# En Windows
+start frontend.html
+```
+
+Alternativamente, arrastra el archivo `frontend.html` a la ventana de tu navegador.
+
+<Tip>
+Si el backend no está en `http://localhost:3000`, edita la URL base de la API dentro de `frontend.html` para que apunte a la dirección correcta antes de abrirlo.
+</Tip>
+
+</Step>
+
+<Step title="Crear tu primera nota">
+
+Con el backend activo y el frontend abierto en el navegador, sigue estos pasos para crear tu primera nota:
+
+1. Localiza el formulario de **Nueva nota** en la interfaz.
+2. Escribe un **título** en el campo correspondiente (`notes_name`).
+3. Escribe una **descripción** en el área de texto (`notes_descr`).
+4. Haz clic en **Guardar** o **Agregar** para enviar el formulario.
+
+La nota se almacena en la base de datos con los siguientes valores por defecto:
+
+```sql
+-- Equivalente interno al crear una nota
+SELECT notes_agregar(
+  'Mi primera nota',     -- notes_name
+  'Contenido de prueba', -- notes_descr
+  'INCOMPLETO',          -- notes_status (valor inicial)
+  'ACTIVO'               -- notes_lstatus (visible en listados)
+);
+```
+
+Una vez guardada, la nota aparece en el listado principal de la aplicación.
+
+<Check>
+Tu primera nota ha sido creada. A partir de aquí puedes editarla para marcarla como `COMPLETADO`, o eliminarla de forma lógica desde la interfaz.
+</Check>
+
+</Step>
+
+</Steps>
+
+## Siguientes pasos
+
+<CardGroup cols={2}>
+  <Card title="Crear notas" icon="pencil" href="/features/creating-notes">
+    Aprende a gestionar notas desde la interfaz
+  </Card>
+  <Card title="Estados de las notas" icon="circle-check" href="/features/note-status">
+    Entiende `notes_status` y `notes_lstatus`
+  </Card>
+  <Card title="Configuración de la base de datos" icon="database" href="/setup/database">
+    Detalles avanzados sobre la estructura de la base de datos
+  </Card>
+  <Card title="Referencia de la API" icon="code" href="/api/notes-agregar">
+    Documentación de los procedimientos almacenados
+  </Card>
+</CardGroup>

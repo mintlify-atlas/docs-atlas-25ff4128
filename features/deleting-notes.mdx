@@ -1,0 +1,83 @@
+---
+title: "Deleting notes"
+description: "How soft deletion works in Bloc de Notas and how notes_eliminar marks a note as INACTIVO."
+---
+
+Bloc de Notas uses **soft deletion**: deleting a note does not remove it from the database. Instead, `notes_eliminar` sets the note's `notes_lstatus` to `'INACTIVO'`, hiding it from the active notes list while preserving the record.
+
+<Warning>
+  Deletion in Bloc de Notas is not permanent. The note row remains in the `notes` table. If you need to permanently remove data, you must do so directly in the database.
+</Warning>
+
+## Delete a note
+
+<Steps>
+  <Step title="Select the note">
+    In the frontend, locate the note you want to delete in the notes list.
+  </Step>
+  <Step title="Confirm deletion">
+    Click the delete button for that note. The frontend sends the note's ID to the backend.
+  </Step>
+  <Step title="Note is deactivated">
+    The backend calls `notes_eliminar` with the note's ID. The procedure sets `notes_lstatus = 'INACTIVO'` for that row. The note disappears from the active notes list.
+  </Step>
+</Steps>
+
+## How `notes_eliminar` works
+
+`notes_eliminar` is a PostgreSQL stored procedure that:
+
+1. Accepts the `notes_id` of the note to delete.
+2. Locates the row in the `notes` table.
+3. Sets `notes_lstatus = 'INACTIVO'` on that row.
+4. Does **not** delete the row from the table.
+
+<ParamField path="query.p1_notes_id" type="integer" required>
+  The ID of the note to soft-delete.
+</ParamField>
+
+### Example call
+
+```sql
+SELECT notes_eliminar(1);
+```
+
+After calling `notes_eliminar`, the note is no longer returned by `notes_listado`:
+
+```sql
+SELECT * FROM notes_listado();
+-- Note with notes_id = 1 is no longer in the results
+```
+
+However, the row still exists in the database and can be retrieved directly:
+
+```sql
+SELECT * FROM notes_buscar(1);
+```
+
+```sql
+ notes_id |   notes_name    |     notes_descr     | notes_status | notes_lstatus
+----------+-----------------+---------------------+--------------+---------------
+        1 | Comprar víveres | Leche, pan, huevos  | INCOMPLETO   | INACTIVO
+(1 row)
+```
+
+## ACTIVO vs INACTIVO
+
+| Value | Meaning | Visible in notes list? |
+|---|---|---|
+| `ACTIVO` | The note is active and available | Yes — returned by `notes_listado` |
+| `INACTIVO` | The note has been soft-deleted | No — excluded from `notes_listado` |
+
+<Note>
+  There is no built-in procedure to restore a soft-deleted note. To reactivate a note marked `INACTIVO`, update its `notes_lstatus` directly in the database with a SQL `UPDATE` statement.
+</Note>
+
+## Difference between soft delete and permanent delete
+
+| Action | Effect on database | Recoverable? |
+|---|---|---|
+| `notes_eliminar` (soft delete) | Sets `notes_lstatus = 'INACTIVO'` | Yes — record is still in the table |
+| SQL `DELETE` (permanent) | Removes the row entirely | No |
+
+Bloc de Notas only supports soft deletion through its stored procedures. This preserves historical records and prevents accidental data loss.

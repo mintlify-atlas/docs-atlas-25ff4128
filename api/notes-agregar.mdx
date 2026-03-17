@@ -1,0 +1,54 @@
+---
+title: "notes_agregar — Add a note"
+description: "Inserts a new note into the database and returns the generated notes_id."
+---
+
+The `notes_agregar` function inserts a single row into the `public.notes` table and returns the auto-generated primary key.
+
+## Parameters
+
+<ParamField path="p1_notes_name" type="varchar" required>
+  The title or name of the note.
+</ParamField>
+
+<ParamField path="p2_notes_descr" type="text" required>
+  The body content of the note.
+</ParamField>
+
+<ParamField path="p3_notes_status" type="varchar" required>
+  Completion status of the note. Must be one of:
+
+  - `COMPLETADO` — the note is marked as completed.
+  - `INCOMPLETO` — the note is not yet completed.
+</ParamField>
+
+<ParamField path="p5_notes_lstatus" type="varchar" required>
+  Logical status that controls visibility. Use `ACTIVO` when creating a new active note.
+
+  - `ACTIVO` — note is active and visible in listings.
+  - `INACTIVO` — note is hidden from normal listings.
+</ParamField>
+
+## Return value
+
+Returns an `integer` — the value of `notes_id` assigned to the newly inserted row.
+
+<ResponseField name="notes_id" type="integer" required>
+  The auto-incremented primary key of the newly created note.
+</ResponseField>
+
+## Example
+
+```sql
+SELECT public.notes_agregar(
+    'Lista de compras',
+    'Leche, pan, huevos',
+    'INCOMPLETO',
+    'ACTIVO'
+);
+-- Returns: 7 (the new notes_id)
+```
+
+<Tip>
+  Always pass `ACTIVO` as `p5_notes_lstatus` when creating a new note. Use `notes_eliminar` to set a note to `INACTIVO`.
+</Tip>

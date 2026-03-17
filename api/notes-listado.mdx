@@ -1,0 +1,55 @@
+---
+title: "notes_listado — List all notes"
+description: "Returns every row in the notes table as a set of notes records."
+---
+
+The `notes_listado` function iterates over all rows in `public.notes` and returns them as `SETOF public.notes`. It takes no parameters.
+
+## Parameters
+
+This function accepts no parameters.
+
+## Return value
+
+Returns `SETOF public.notes` — all rows currently stored in the table, in undefined order.
+
+<ResponseField name="notes_id" type="integer">
+  Primary key of the note.
+</ResponseField>
+
+<ResponseField name="notes_name" type="varchar">
+  Title or name of the note.
+</ResponseField>
+
+<ResponseField name="notes_descr" type="text">
+  Body content of the note.
+</ResponseField>
+
+<ResponseField name="notes_status" type="varchar">
+  Completion status: `COMPLETADO` or `INCOMPLETO`.
+</ResponseField>
+
+<ResponseField name="notes_lstatus" type="varchar">
+  Logical status: `ACTIVO` or `INACTIVO`.
+</ResponseField>
+
+<Note>
+  `notes_listado` returns all rows including those with `notes_lstatus = 'INACTIVO'`. Filter by `notes_lstatus` in your application logic if you only want to display active notes.
+</Note>
+
+## Example
+
+```sql
+SELECT * FROM public.notes_listado();
+--  notes_id | notes_name        | notes_descr          | notes_status | notes_lstatus
+-- ----------+-------------------+----------------------+--------------+--------------
+--         1 | Reunión           | Preparar agenda       | COMPLETADO   | ACTIVO
+--         2 | Lista de compras  | Leche, pan, huevos   | INCOMPLETO   | ACTIVO
+--         3 | Proyecto antiguo  | Notas obsoletas       | INCOMPLETO   | INACTIVO
+```
+
+```sql
+-- Show only active notes in your application
+SELECT * FROM public.notes_listado()
+WHERE notes_lstatus = 'ACTIVO';
+```
